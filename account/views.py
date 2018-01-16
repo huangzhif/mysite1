@@ -22,7 +22,9 @@ def user_login(request):
                 login(request, user)
                 return HttpResponse("Welcome you.you have been authenticated successfully")
             else:
-                return HttpResponse("Invalid login")
+                return HttpResponse("password is not right")
+        else:
+            return HttpResponse("Invalid login")
 
     if request.method == "GET":  # 打开网站
         login_form = LoginForm()  # 第一次访问网站，获取未绑定数据的表单实例
