@@ -13,3 +13,18 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return 'user{}'.format(self.user.username)
+
+
+# 个人信息类
+class UserInfo(models.Model):
+    user = models.OneToOneField(User, unique=True)
+    school = models.CharField(max_length=100, blank=True)
+    company = models.CharField(max_length=100, blank=True)
+    profession = models.CharField(max_length=100, blank=True)
+    address = models.CharField(max_length=100, blank=True)
+    aboutme = models.TextField(blank=True)  # 允许为空
+
+    photo = models.ImageField(blank=True)
+
+    def __str__(self):
+        return "user:{}".format(self.user.username)
