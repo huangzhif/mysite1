@@ -27,7 +27,7 @@ class ArticlePost(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ("title",)
+        ordering = ("-updated",)
         index_together = (('id', 'slug'),) #为每篇文章的id和slug获取文章对象，建立索引后，提高读取速度
 
     def __str__(self):
@@ -38,4 +38,6 @@ class ArticlePost(models.Model):
         super(ArticlePost, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
+        # reverse(viewname,urlconf=None,args=None,kwargs=None,Current_app=None)
+        # 参数viewname就是在每个应用的urls.py中设置的URL时的值
         return reverse("article:article_detail", args=[self.id, self.slug])
