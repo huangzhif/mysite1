@@ -9,6 +9,7 @@ from .models import UserProfile, UserInfo
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 
 # Create your views here.
@@ -48,7 +49,7 @@ def register(request):
 
             UserInfo.objects.create(user=new_user)  # 保护用户注册信息后，同时在account_userinfo 数据库表中写入该用户的ID信息
 
-            return HttpResponse("successfully")
+            return HttpResponseRedirect(reverse("account:user_login"))
         else:
             return HttpResponse("sorry,you can not register.")
 

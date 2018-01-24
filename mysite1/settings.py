@@ -127,7 +127,7 @@ STATICFILES_DIRS=(
 )
 
 #重定向
-LOGIN_REDIRECT_URL = '/blog/'
+LOGIN_REDIRECT_URL = '/home/'
 
 # 邮件提醒设置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

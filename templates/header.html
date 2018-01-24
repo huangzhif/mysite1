@@ -7,8 +7,12 @@
         </div>
         <div>
             <ul class="nav navbar-nav" role="navigation">
+                <li><a href="{% url 'home' %}">HOME</a></li>
                 <li>
                     <a href="{% url 'blog:blog_title' %}">BLOG</a>
+                </li>
+                <li>
+                    <a href="{% url 'article:article_titles' %}">文章</a>
                 </li>
             </ul>
             <ul class="nav navbar-nav navbar-right" style="margin-right: 10px">
@@ -33,6 +37,7 @@
                         {#                    account配置在/mysite1.urls.py中，user_login配置在account/urls.py中#}
                         <a href="{% url 'account:user_login' %}">LOGIN</a>
                     </li>
+                    <li><a href="{% url 'account:user_register' %}">Sign up</a></li>
                 {% endif %}
             </ul>
         </div>
