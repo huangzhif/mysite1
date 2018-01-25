@@ -25,6 +25,7 @@ class ArticlePost(models.Model):
     body = models.TextField()
     created = models.DateTimeField(default=timezone.now())
     updated = models.DateTimeField(auto_now=True)
+    articles_like = models.CharField(max_length=100,default=timezone.now())
 
     class Meta:
         ordering = ("-updated",)
@@ -41,3 +42,6 @@ class ArticlePost(models.Model):
         # reverse(viewname,urlconf=None,args=None,kwargs=None,Current_app=None)
         # 参数viewname就是在每个应用的urls.py中设置的URL时的值
         return reverse("article:article_detail", args=[self.id, self.slug])
+
+class articlePost_Users_Likes(models.Model):
+    users_like = models.ManyToManyField(User,related_name="articles_like",blank=True)
