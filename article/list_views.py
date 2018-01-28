@@ -3,6 +3,10 @@ from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import ArticlePost, ArticleColumn
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import HttpResponse
 
 
 def article_titles(request, username=None):
@@ -33,3 +37,22 @@ def article_titles(request, username=None):
                                                                      "userinfo": userinfo, "user": user})
 
     return render(request, "article/list/article_titles.html", {"articles": articles, "page": current_page})
+
+
+@csrf_exempt  # 取消当前函数防跨站请求伪造功能，即便settings中设置了全局中间件。
+@require_POST
+@login_required(login_url='/account/login/')
+def like_article(request):
+    article_id = request.POST.get("id")
+    action = request.POST.get("action")
+    if article_id and action:
+        try:
+            article = ArticlePost.objects.get(id=article_id) #获取当前文章的对象
+            if action == 'like':
+                article.users_like.add(request.user)
+                return HttpResponse("1")
+            else:
+                article.users_like.remove(request.user)
+                return HttpResponse("2")
+        except:
+            return HttpResponse("no")

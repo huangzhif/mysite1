@@ -27,6 +27,8 @@ class ArticlePost(models.Model):
     updated = models.DateTimeField(auto_now=True)
     articles_like = models.CharField(max_length=100,default=timezone.now())
 
+    users_like = models.ManyToManyField(User,related_name="articles_like",blank=True) #字段名
+
     class Meta:
         ordering = ("-updated",)
         index_together = (('id', 'slug'),) #为每篇文章的id和slug获取文章对象，建立索引后，提高读取速度
@@ -42,6 +44,3 @@ class ArticlePost(models.Model):
         # reverse(viewname,urlconf=None,args=None,kwargs=None,Current_app=None)
         # 参数viewname就是在每个应用的urls.py中设置的URL时的值
         return reverse("article:article_detail", args=[self.id, self.slug])
-
-class articlePost_Users_Likes(models.Model):
-    users_like = models.ManyToManyField(User,related_name="articles_like",blank=True)
