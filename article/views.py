@@ -5,11 +5,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from .models import ArticleColumn
 from django.shortcuts import render
-from django.core.paginator import Paginator,EmptyPage,PageNotAnInteger
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import ArticleColumn, ArticlePost
 from .forms import ArticleColumnForm, ArticlePostForm
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
+import redis
+from django.conf import settings
+
+# 创建StrictRedis对象，与redis服务器建立链接
+r = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 
 
 # Create your views here.
@@ -98,7 +103,7 @@ def article_post(request):
 @login_required(login_url='/account/login/')
 def article_list(request):
     articles_list = ArticlePost.objects.filter(author=request.user)
-    paginator = Paginator(articles_list, 10) #每页10条数据
+    paginator = Paginator(articles_list, 10)  # 每页10条数据
     page = request.GET.get('page')
     try:
         current_page = paginator.page(page)
@@ -115,7 +120,24 @@ def article_list(request):
 @login_required(login_url='/account/login')
 def article_detail(request, id, slug):
     article = get_object_or_404(ArticlePost, id=id, slug=slug)
-    return render(request, "article/column/article_detail.html", {"article": article})
+    # 记录访问次数，以‘article：id:views’为键来记录次数
+    total_views = r.incr("article:{}:views".format(article.id))
+
+    #实现article_ranking中的article.id以步长1 自增，每访问一次，id值增加1
+    r.zincrby('article_ranking', article.id, 1)
+    #返回有序集中，指定区间内的成员，成员的位置按分数值递增来排序
+    #start：0 ，-1表示最后一个成员,只取10个成员
+    article_ranking = r.zrange('article_ranking', 0, -1, desc=True)[:10]
+
+    article_ranking_ids = [int(id) for id in article_ranking]
+
+    #id__in 功能是查询id在article_ranking_ids中的所有文章对象，并以文章对象为元素生成列表
+    most_viewed = list(ArticlePost.objects.filter(id__in=article_ranking_ids))
+
+    most_viewed.sort(key=lambda x: article_ranking_ids.index(x.id))
+
+    return render(request, "article/column/article_detail.html", {"article": article, "total_views": total_views,
+                                                                  "most_viewed": most_viewed})
 
 
 @login_required(login_url='/account/login')

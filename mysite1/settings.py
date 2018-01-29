@@ -137,3 +137,8 @@ EMAIL_HOST_PASSWORD = '邮件授权码'
 EMAIL_PORT = 25
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "942402379@qq.com"
+
+#配置redis数据库，用于记录文章的浏览数量
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0

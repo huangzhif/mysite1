@@ -5,50 +5,65 @@
 {% block title %}{{ article.title }}{% endblock %}
 
 {% block content %}
-{#    这里使用with发起了一个赋值操作，total_likes 和 users_like 这样在两部分所圈定的区间中就可以使用两个变量#}
+    {#    这里使用with发起了一个赋值操作，total_likes 和 users_like 这样在两部分所圈定的区间中就可以使用两个变量#}
     {% with total_likes=article.users_like.count users_like=article.users_like.all %}
+        <div class="container">
 
-        <div>
-            {#     文章头部#}
-            <header>
-                <h1>{{ article.title }}</h1>
-                <p>
-                    <a href="{% url 'article:author_articles' article.author.username %}">{{ article.author.username }}</a>
-                    <span style="margin-left: 20px"
-{#                          total|pluralize 单复数显示#}
-                          class="glyphicon glyphicon-thumbs-up">{{ total_likes }}like{{ total_likes|pluralize }}</span>
-                </p>
-            </header>
+            <div class="col-md-9">
+                {#     文章头部#}
+                <header>
+                    <h1>{{ article.title }}</h1>
+                    <p>
+                        <a href="{% url 'article:author_articles' article.author.username %}">{{ article.author.username }}</a>
+                        <span style="margin-left: 20px"
+                                {#                          total|pluralize 单复数显示#}
+                              class="glyphicon glyphicon-thumbs-up">{{ total_likes }}like{{ total_likes|pluralize }}</span>
+                        <span style="margin-left: 20px">{{ total_views }}view{{ total_views|pluralize }}</span>
+                    </p>
+                </header>
 
-            <link rel="stylesheet" href="{% static 'editor/css/editormd.preview.css' %}"/>
+                <link rel="stylesheet" href="{% static 'editor/css/editormd.preview.css' %}"/>
 
-            {#        文章内容#}
-            <div id='editormd-view'>
+                {#        文章内容#}
+                <div id='editormd-view'>
             <textarea id="append-test" style="display: none;">
 {{ article.body }}
             </textarea>
+                </div>
+
+                {#        是否点赞#}
+                <div>
+                    <p class="text-center">
+                        <a onclick="like_article({{ article.id }},'like')" href="#">
+                            <span class="glyphicon glyphicon-thumbs-up">like</span>
+                        </a>
+                        <a onclick="like_article({{ article.id }},'unlike')" href="#">
+                            <span class="glyphicon glyphicon-thumbs-down">unlike</span>
+                        </a>
+                    </p>
+                </div>
+
+                {#        读者列表#}
+                <div>
+                    <p class="text-center"><strong>点赞本文的读者</strong></p>
+                    {% for user in users_like %}
+                        <p class="text-center">{{ user.username }}</p>
+                    {% empty %}
+                        <p class="text-center">还没有人对此文章表态</p>
+                    {% endfor %}
+                </div>
             </div>
 
-            {#        是否点赞#}
-            <div>
+            <div class="col-md-3">
                 <p class="text-center">
-                    <a onclick="like_article({{ article.id }},'like')" href="#">
-                        <span class="glyphicon glyphicon-thumbs-up">like</span>
-                    </a>
-                    <a onclick="like_article({{ article.id }},'unlike')" href="#">
-                        <span class="glyphicon glyphicon-thumbs-down">unlike</span>
-                    </a>
-                </p>
-            </div>
-
-            {#        读者列表#}
-            <div>
-                <p class="text-center"><strong>点赞本文的读者</strong></p>
-                {% for user in users_like %}
-                    <p class="text-center">{{ user.username }}</p>
-                {% empty %}
-                    <p class="text-center">还没有人对此文章表态</p>
-                {% endfor %}
+                <h3>最受欢迎文章</h3></p>
+                <ol>
+                    {% for article_rand in most_viewed %}
+                        <li>
+                            <a href="{{ article_rand.get_url_path }}">{{ article_rand.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ol>
             </div>
         </div>
 
