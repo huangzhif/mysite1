@@ -6,8 +6,8 @@ from django.http import HttpResponse
 from .models import ArticleColumn
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .models import ArticleColumn, ArticlePost
-from .forms import ArticleColumnForm, ArticlePostForm
+from .models import ArticleColumn, ArticlePost,Comment
+from .forms import ArticleColumnForm, ArticlePostForm ,CommentForm
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 import redis
@@ -136,8 +136,18 @@ def article_detail(request, id, slug):
 
     most_viewed.sort(key=lambda x: article_ranking_ids.index(x.id))
 
+    if request.method == "POST":
+        #直接获取表单提交的内容
+        comment_form = CommentForm(data=request.POST)
+        if comment_form.is_valid():
+            new_comment = comment_form.save(commit=False)
+            new_comment.article = article
+            new_comment.save()
+    else:
+        comment_form = CommentForm()
+
     return render(request, "article/column/article_detail.html", {"article": article, "total_views": total_views,
-                                                                  "most_viewed": most_viewed})
+                                                                  "most_viewed": most_viewed,"comment_form":comment_form})
 
 
 @login_required(login_url='/account/login')
