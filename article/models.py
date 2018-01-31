@@ -16,6 +16,14 @@ class ArticleColumn(models.Model):
     def __str__(self):
         return self.column
 
+#标签
+class ArticleTag(models.Model):
+    author = models.ForeignKey(User,related_name="tag")
+    tag = models.CharField(max_length=500)
+
+    def __str__(self):
+        return self.tag
+
 
 class ArticlePost(models.Model):
     author = models.ForeignKey(User, related_name="article")
@@ -28,6 +36,8 @@ class ArticlePost(models.Model):
     articles_like = models.CharField(max_length=100, default=timezone.now())
 
     users_like = models.ManyToManyField(User, related_name="articles_like", blank=True)  # 字段名
+
+    article_tag = models.ManyToManyField(ArticleTag,related_name="article_tag",blank=True) #标签，标签文章多对多关系 blank如果为True，字段允许为空，默认不允许
 
     class Meta:
         ordering = ("-updated",)

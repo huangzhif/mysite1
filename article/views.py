@@ -6,8 +6,8 @@ from django.http import HttpResponse
 from .models import ArticleColumn
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .models import ArticleColumn, ArticlePost,Comment
-from .forms import ArticleColumnForm, ArticlePostForm ,CommentForm
+from .models import ArticleColumn, ArticlePost, Comment, ArticleTag
+from .forms import ArticleColumnForm, ArticlePostForm, CommentForm, ArticleTagForm
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 import redis
@@ -123,21 +123,21 @@ def article_detail(request, id, slug):
     # 记录访问次数，以‘article：id:views’为键来记录次数
     total_views = r.incr("article:{}:views".format(article.id))
 
-    #实现article_ranking中的article.id以步长1 自增，每访问一次，id值增加1
+    # 实现article_ranking中的article.id以步长1 自增，每访问一次，id值增加1
     r.zincrby('article_ranking', article.id, 1)
-    #返回有序集中，指定区间内的成员，成员的位置按分数值递增来排序
-    #start：0 ，-1表示最后一个成员,只取10个成员
+    # 返回有序集中，指定区间内的成员，成员的位置按分数值递增来排序
+    # start：0 ，-1表示最后一个成员,只取10个成员
     article_ranking = r.zrange('article_ranking', 0, -1, desc=True)[:10]
 
     article_ranking_ids = [int(id) for id in article_ranking]
 
-    #id__in 功能是查询id在article_ranking_ids中的所有文章对象，并以文章对象为元素生成列表
+    # id__in 功能是查询id在article_ranking_ids中的所有文章对象，并以文章对象为元素生成列表
     most_viewed = list(ArticlePost.objects.filter(id__in=article_ranking_ids))
 
     most_viewed.sort(key=lambda x: article_ranking_ids.index(x.id))
 
     if request.method == "POST":
-        #直接获取表单提交的内容
+        # 直接获取表单提交的内容
         comment_form = CommentForm(data=request.POST)
         if comment_form.is_valid():
             new_comment = comment_form.save(commit=False)
@@ -147,7 +147,8 @@ def article_detail(request, id, slug):
         comment_form = CommentForm()
 
     return render(request, "article/column/article_detail.html", {"article": article, "total_views": total_views,
-                                                                  "most_viewed": most_viewed,"comment_form":comment_form})
+                                                                  "most_viewed": most_viewed,
+                                                                  "comment_form": comment_form})
 
 
 @login_required(login_url='/account/login')
@@ -186,3 +187,41 @@ def redit_article(request, article_id):
             return HttpResponse("1")
         except:
             return HttpResponse("2")
+
+
+#添加tag视图
+@login_required(login_url='/account/login')
+@csrf_exempt
+def article_tag(request):
+    if request.method == "GET":
+        article_tags = ArticleTag.objects.filter(author=request.user)  # 获取当前用户下的所有标签
+        article_tag_form = ArticleTagForm()  # 实例化一个form表单
+        return render(request, 'article/tag/tag_list.html',
+                      {"article_tags": article_tags, "article_tag_form": article_tag_form})
+
+    if request.method == "POST":
+        tag_post_form = ArticleTagForm(data=request.POST)  # 获取表单post回来的值
+        if tag_post_form.is_valid():#执行验证并返回一个表示数据是否合法的布尔值 如：是否必录
+            try:
+                new_tag = tag_post_form.save(commit=False)
+                new_tag.author = request.user #author 为models定义变量
+                new_tag.save()
+                return HttpResponse("1")
+            except:
+                return HttpResponse("the data cannot be saved.")
+
+        else:
+            return HttpResponse("sorry,the form is not valid.")
+
+#删除tag视图
+@login_required(login_url='/account/login')
+@require_POST
+@csrf_exempt
+def del_article_tag(request):
+    tag_id = request.POST['tag_id']
+    try:
+        tag = ArticleTag.objects.get(id=tag_id) #获取前端回传的tag_id
+        tag.delete()            #删除该tag
+        return HttpResponse("1")
+    except:
+        return HttpResponse("2")
