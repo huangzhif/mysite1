@@ -1,5 +1,5 @@
-#-*- coding:utf-8 -*-
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 """mysite1 URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -43,6 +43,6 @@ urlpatterns = [
     url(r'^blog/', include('blog.urls', namespace='blog', app_name='blog')),
     url(r'^account/', include('account.urls', namespace='account', app_name='account')),
     url(r'^article/', include('article.urls', namespace='article', app_name="article")),
-    url(r'home/', TemplateView.as_view(template_name="home.html"),name='home'),
+    url(r'home/', TemplateView.as_view(template_name="home.html"), name='home'),
+    url(r'^image/', include('image.urls', namespace='image', app_name='image'))
 ]
-
