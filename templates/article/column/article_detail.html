@@ -21,6 +21,13 @@
                               class="glyphicon glyphicon-thumbs-up">{{ total_likes }}like{{ total_likes|pluralize }}</span>
                         <span style="margin-left: 20px">{{ total_views }}view{{ total_views|pluralize }}</span>
                     </p>
+                    <p>
+                        <span style="margin-right: 10px">
+                            <strong>Tags:</strong>
+                        </span>
+                        <!--获取该文章所有tag，并以逗号分割-->
+                        {{ article.article_tag.all | join:", " }}
+                    </p>
                 </header>
 
                 <link rel="stylesheet" href="{% static 'editor/css/editormd.preview.css' %}"/>
@@ -116,6 +123,18 @@
                     {% for comment_article in most_comments %}
                         <li>
                             <a href="{{ comment_article.get_absolute_url }}">{{ comment_article.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <hr>
+                <p class="text-center">
+                <h3>推荐相似文章</h3></p>
+                <ul>
+                    {% for similar in similar_articles %}
+                        <li>
+                            <a href="{{ similar.get_absolute_url }}">{{ similar.title }}</a>
+                            {% empty %}
+                            <p>sorry ,没有相似文章</p>
                         </li>
                     {% endfor %}
                 </ul>

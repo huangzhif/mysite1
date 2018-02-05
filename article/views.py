@@ -12,6 +12,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 import redis
 from django.conf import settings
+import json
+from django.db.models import Count
 
 # 创建StrictRedis对象，与redis服务器建立链接
 r = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
@@ -77,6 +79,7 @@ def del_article_column(request):
 @login_required(login_url='/account/login/')
 @csrf_exempt
 def article_post(request):
+    # 保存文章
     if request.method == "POST":
         article_post_form = ArticlePostForm(data=request.POST)
         if article_post_form.is_valid():
@@ -86,6 +89,14 @@ def article_post(request):
                 new_article.author = request.user
                 new_article.column = request.user.article_column.get(id=request.POST['column_id'])
                 new_article.save()
+
+                tags = request.POST['tags']
+                if tags:
+                    # 解码json格式数据 成 list,并循环
+                    for atag in json.loads(tags):
+                        # 获取tag对象
+                        tag = request.user.tag.get(tag=atag)
+                        new_article.article_tag.add(tag)
                 return HttpResponse("1")
             except:
                 return HttpResponse("2")
@@ -93,11 +104,16 @@ def article_post(request):
         else:
             return HttpResponse("3")
 
+    # 新增文章
     else:
         article_post_form = ArticlePostForm()
         article_columns = request.user.article_column.all()
+
+        # 获取该用户所有标签,并在新增文章时显示
+        article_tags = request.user.tag.all()
         return render(request, "article/column/article_post.html", {"article_post_form": article_post_form,
-                                                                    "article_columns": article_columns})
+                                                                    "article_columns": article_columns,
+                                                                    "article_tags": article_tags})
 
 
 @login_required(login_url='/account/login/')
@@ -146,9 +162,13 @@ def article_detail(request, id, slug):
     else:
         comment_form = CommentForm()
 
+    article_tags_ids = article.article_tag.values_list("id", flat=True)
+    similar_articles = ArticlePost.objects.filter(article_tag__in=article_tags_ids).exclude(id=article.id)
+    similar_articles = similar_articles.annotate(same_tags=Count("article_tag")).order_by('-same_tags', '-created')[:4]
     return render(request, "article/column/article_detail.html", {"article": article, "total_views": total_views,
                                                                   "most_viewed": most_viewed,
-                                                                  "comment_form": comment_form})
+                                                                  "comment_form": comment_form,
+                                                                  "similar_articles": similar_articles})
 
 
 @login_required(login_url='/account/login')
@@ -172,10 +192,14 @@ def redit_article(request, article_id):
         article = ArticlePost.objects.get(id=article_id)
         this_article_form = ArticlePostForm(initial={"title": article.title})
         this_article_column = article.column
+        #获取tags
+        article_tags = request.user.tag.all()
         return render(request, "article/column/redit_article.html",
-                      {"article": article, "article_columns": article_columns,
+                      {"article": article,
+                       "article_columns": article_columns,
                        "this_article_column": this_article_column,
-                       "this_article_form": this_article_form})
+                       "this_article_form": this_article_form,
+                       "article_tags":article_tags})
 
     else:
         redit_article = ArticlePost.objects.get(id=article_id)
@@ -184,12 +208,19 @@ def redit_article(request, article_id):
             redit_article.title = request.POST['title']
             redit_article.body = request.POST['body']
             redit_article.save()
+
+            # 保存tags
+            tags = request.POST['tags']
+            if tags:
+                for atag in json.loads(tags):
+                    tag = request.user.tag.get(tag=atag)
+                    redit_article.article_tag.add(tag)
             return HttpResponse("1")
         except:
             return HttpResponse("2")
 
 
-#添加tag视图
+# 添加tag视图
 @login_required(login_url='/account/login')
 @csrf_exempt
 def article_tag(request):
@@ -201,10 +232,10 @@ def article_tag(request):
 
     if request.method == "POST":
         tag_post_form = ArticleTagForm(data=request.POST)  # 获取表单post回来的值
-        if tag_post_form.is_valid():#执行验证并返回一个表示数据是否合法的布尔值 如：是否必录
+        if tag_post_form.is_valid():  # 执行验证并返回一个表示数据是否合法的布尔值 如：是否必录
             try:
                 new_tag = tag_post_form.save(commit=False)
-                new_tag.author = request.user #author 为models定义变量
+                new_tag.author = request.user  # author 为models定义变量
                 new_tag.save()
                 return HttpResponse("1")
             except:
@@ -213,15 +244,16 @@ def article_tag(request):
         else:
             return HttpResponse("sorry,the form is not valid.")
 
-#删除tag视图
+
+# 删除tag视图
 @login_required(login_url='/account/login')
 @require_POST
 @csrf_exempt
 def del_article_tag(request):
     tag_id = request.POST['tag_id']
     try:
-        tag = ArticleTag.objects.get(id=tag_id) #获取前端回传的tag_id
-        tag.delete()            #删除该tag
+        tag = ArticleTag.objects.get(id=tag_id)  # 获取前端回传的tag_id
+        tag.delete()  # 删除该tag
         return HttpResponse("1")
     except:
         return HttpResponse("2")

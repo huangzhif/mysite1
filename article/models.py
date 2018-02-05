@@ -47,6 +47,7 @@ class ArticlePost(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):  # 重写save方法，目的实现以下slugify转换方法
+        # slugify(value)　　If value is "Joel is a slug", the output will be "joel-is-a-slug".
         self.slug = slugify(self.title)
         super(ArticlePost, self).save(*args, **kwargs)
 
