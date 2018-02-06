@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'account',
     'article',
     'image',
+    'sorl.thumbnail', #用于图片缩略图
+    'course',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +145,7 @@ DEFAULT_FROM_EMAIL = "942402379@qq.com"
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_DB = 0
+
+#配置图片等媒介保存的路径
+MEDIA_URL="/media/"
+MEDIA_ROOT=os.path.join(BASE_DIR,'media/') #声明了相对项目跟目录的文件保存地址
